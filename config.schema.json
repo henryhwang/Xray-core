@@ -298,3 +298,303 @@
   },
   "required": ["inbounds", "outbounds"]
 }
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Xray Configuration Schema",
+  "description": "JSON schema for Xray configuration file",
+  "type": "object",
+  "properties": {
+    "inbounds": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "port": {
+            "type": "integer",
+            "description": "Port number for the inbound connection"
+          },
+          "protocol": {
+            "type": "string",
+            "description": "Protocol for the inbound connection",
+            "enum": ["vmess", "vless"]
+          },
+          "settings": {
+            "type": "object",
+            "description": "Settings for the inbound protocol",
+            "properties": {
+              "clients": {
+                "type": "array",
+                "description": "List of clients for the inbound connection",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "description": "ID of the client"
+                    },
+                    "level": {
+                      "type": "integer",
+                      "description": "Level of the client"
+                    },
+                    "email": {
+                      "type": "string",
+                      "description": "Email of the client"
+                    },
+                    "flow": {
+                      "type": "string",
+                      "description": "Flow of the client"
+                    }
+                  },
+                  "required": ["id", "level"]
+                }
+              },
+              "fallbacks": {
+                "type": "array",
+                "description": "List of fallbacks for the inbound connection",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string",
+                      "description": "Name of the fallback"
+                    },
+                    "alpn": {
+                      "type": "string",
+                      "description": "Alpn of the fallback"
+                    },
+                    "path": {
+                      "type": "string",
+                      "description": "Path of the fallback"
+                    },
+                    "dest": {
+                      "type": "string",
+                      "description": "Destination of the fallback"
+                    },
+                    "type": {
+                      "type": "string",
+                      "description": "Type of the fallback"
+                    },
+                    "xver": {
+                      "type": "integer",
+                      "description": "Xver of the fallback"
+                    }
+                  },
+                  "required": ["dest", "type"]
+                }
+              }
+            },
+            "required": ["clients"]
+          }
+        },
+        "required": ["port", "protocol", "settings"]
+      }
+    },
+    "outbounds": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "protocol": {
+            "type": "string",
+            "description": "Protocol for the outbound connection",
+            "enum": ["freedom", "vmess", "vless"]
+          },
+          "settings": {
+            "type": "object",
+            "description": "Settings for the outbound protocol",
+            "properties": {
+              "servers": {
+                "type": "array",
+                "description": "List of servers for the outbound connection",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "address": {
+                      "type": "string",
+                      "description": "Address of the server"
+                    },
+                    "port": {
+                      "type": "integer",
+                      "description": "Port of the server"
+                    },
+                    "users": {
+                      "type": "array",
+                      "description": "List of users for the server",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "description": "ID of the user"
+                          },
+                          "level": {
+                            "type": "integer",
+                            "description": "Level of the user"
+                          },
+                           "email": {
+                            "type": "string",
+                            "description": "Email of the user"
+                          },
+                          "flow": {
+                            "type": "string",
+                            "description": "Flow of the user"
+                          }
+                        },
+                        "required": ["id", "level"]
+                      }
+                    }
+                  },
+                  "required": ["address", "port", "users"]
+                }
+              }
+            }
+          }
+        },
+        "required": ["protocol", "settings"]
+      }
+    },
+    "log": {
+      "type": "object",
+      "description": "Log settings",
+      "properties": {
+        "access": {
+          "type": "string",
+          "description": "Path to the access log file"
+        },
+        "error": {
+          "type": "string",
+          "description": "Path to the error log file"
+        },
+        "error_level": {
+          "type": "integer",
+          "description": "Error log level"
+        },
+        "dns": {
+          "type": "boolean",
+          "description": "Enable DNS log"
+        }
+      }
+    },
+    "dns": {
+      "type": "object",
+      "description": "DNS settings",
+      "properties": {
+        "servers": {
+          "type": "array",
+          "description": "List of DNS servers",
+          "items": {
+            "type": "object",
+            "properties": {
+              "address": {
+                "type": "string",
+                "description": "Address of the DNS server"
+              },
+              "domains": {
+                "type": "array",
+                "description": "List of domains for the DNS server",
+                "items": {
+                  "type": "string",
+                  "description": "Domain for the DNS server"
+                }
+              },
+              "client_ip": {
+                "type": "string",
+                "description": "Client IP for the DNS server"
+              }
+            }
+          }
+        },
+        "static_hosts": {
+          "type": "object",
+          "description": "Static hosts for DNS",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "description": "IP address or domain name"
+            }
+          }
+        },
+        "query_strategy": {
+          "type": "string",
+          "description": "Query strategy for DNS",
+          "enum": ["USE_IP", "USE_IP4", "USE_IP6"]
+        },
+        "disable_cache": {
+          "type": "boolean",
+          "description": "Disable DNS cache"
+        },
+        "disable_fallback": {
+          "type": "boolean",
+          "description": "Disable DNS fallback"
+        },
+        "disable_fallback_if_match": {
+          "type": "boolean",
+          "description": "Disable DNS fallback if match"
+        }
+      }
+    },
+    "policy": {
+      "type": "object",
+      "description": "Policy settings",
+      "properties": {
+        "levels": {
+          "type": "object",
+          "description": "Policy settings for different levels",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "handshake": {
+                "type": "integer",
+                "description": "Handshake timeout"
+              },
+              "connection_idle": {
+                "type": "integer",
+                "description": "Connection idle timeout"
+              },
+              "uplink_only": {
+                "type": "integer",
+                "description": "Uplink only timeout"
+              },
+              "downlink_only": {
+                "type": "integer",
+                "description": "Downlink only timeout"
+              },
+              "buffer_size": {
+                "type": "integer",
+                "description": "Buffer size"
+              }
+            }
+          }
+        },
+        "system": {
+          "type": "object",
+          "description": "System policy settings",
+          "properties": {
+            "handshake": {
+              "type": "integer",
+              "description": "Handshake timeout"
+            },
+            "connection_idle": {
+              "type": "integer",
+              "description": "Connection idle timeout"
+            },
+            "uplink_only": {
+              "type": "integer",
+              "description": "Uplink only timeout"
+            },
+            "downlink_only": {
+              "type": "integer",
+              "description": "Downlink only timeout"
+            },
+            "buffer_size": {
+              "type": "integer",
+              "description": "Buffer size"
+            }
+          }
+        }
+      }
+    }
+  },
+  "required": ["inbounds", "outbounds"]
+}
