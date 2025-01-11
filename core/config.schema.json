@@ -1,0 +1,483 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "title": "Xray Core Configuration Schema",
+  "description": "Schema for Xray core configuration file",
+  "required": ["inbound", "outbound"],
+  "definitions": {
+    "address": {
+      "oneOf": [
+        { "type": "string", "format": "ipv4" },
+        { "type": "string", "format": "ipv6" },
+        { "type": "string", "format": "hostname" }
+      ]
+    },
+    "port": {
+      "oneOf": [
+        { "type": "integer", "minimum": 0, "maximum": 65535 },
+        { "type": "string", "pattern": "^[0-9]{1,5}$" }
+      ]
+    },
+    "transportProtocol": {
+      "type": "string",
+      "enum": ["tcp", "udp", "mkcp", "websocket", "http", "domainsocket", "quic"]
+    },
+    "protocol": {
+      "type": "string",
+      "enum": ["vmess", "vless", "trojan", "shadowsocks", "dokodemo-door", "socks", "http", "freedom", "blackhole", "dns"]
+    }
+  },
+  "properties": {
+    "inbound": {
+      "type": "array",
+      "description": "Inbound handler configurations. Must have at least one item.",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["tag", "port", "protocol"],
+        "properties": {
+          "tag": {
+            "type": "string",
+            "description": "Tag of the inbound handler. Must be unique among all inbound handlers"
+          },
+          "listen": {
+            "$ref": "#/definitions/address",
+            "description": "Address to listen on. Defaults to \"0.0.0.0\" if not specified"
+          },
+          "port": {
+            "$ref": "#/definitions/port",
+            "description": "Port to listen on"
+          },
+          "protocol": {
+            "type": "string",
+            "description": "Protocol name of inbound proxy"
+          },
+          "settings": {
+            "type": "object",
+            "description": "Protocol-specific settings"
+          },
+          "stream_settings": {
+            "type": "object",
+            "properties": {
+              "network": {
+                "$ref": "#/definitions/transportProtocol"
+              },
+              "security": {
+                "type": "string",
+                "enum": ["none", "tls"]
+              },
+              "tlsSettings": {
+                "type": "object",
+                "properties": {
+                  "serverName": { "type": "string" },
+                  "certificates": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "certificateFile": { "type": "string" },
+                        "keyFile": { "type": "string" },
+                        "certificate": { "type": "array", "items": { "type": "string" } },
+                        "key": { "type": "array", "items": { "type": "string" } }
+                      }
+                    }
+                  }
+                }
+              },
+              "wsSettings": {
+                "type": "object",
+                "properties": {
+                  "path": { "type": "string" },
+                  "headers": { "type": "object" }
+                }
+              }
+            }
+          },
+          "sniffing": {
+            "type": "object",
+            "properties": {
+              "enabled": { "type": "boolean" },
+              "destOverride": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": ["http", "tls"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "outbound": {
+      "type": "array",
+      "description": "Outbound handler configurations. Must have at least one item. The first item is used as default for routing.",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["tag", "protocol"],
+        "properties": {
+          "tag": {
+            "type": "string",
+            "description": "Tag of this outbound handler"
+          },
+          "protocol": {
+            "type": "string",
+            "description": "Protocol name of outbound proxy"
+          },
+          "settings": {
+            "type": "object",
+            "description": "Protocol-specific settings"
+          },
+          "stream_settings": {
+            "type": "object",
+            "properties": {
+              "network": {
+                "$ref": "#/definitions/transportProtocol"
+              },
+              "security": {
+                "type": "string",
+                "enum": ["none", "tls"]
+              },
+              "tlsSettings": {
+                "type": "object",
+                "properties": {
+                  "serverName": { "type": "string" },
+                  "allowInsecure": { "type": "boolean" }
+                }
+              }
+            }
+          },
+          "expire": {
+            "type": "integer",
+            "description": "If not zero, this outbound will be expired in seconds",
+            "minimum": 0
+          },
+          "comment": {
+            "type": "string",
+            "description": "Comment of this outbound handler"
+          }
+        }
+      }
+    },
+    "routing": {
+      "type": "object",
+      "properties": {
+        "domainStrategy": {
+          "type": "string",
+          "enum": ["AsIs", "IPIfNonMatch", "IPOnDemand"]
+        },
+        "rules": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "type": { "type": "string" },
+              "domain": { 
+                "type": "array",
+                "items": { "type": "string" }
+              },
+              "ip": {
+                "type": "array",
+                "items": { "type": "string" }
+              },
+              "port": { "type": "string" },
+              "network": { "type": "string" },
+              "source": {
+                "type": "array",
+                "items": { "type": "string" }
+              },
+              "user": {
+                "type": "array",
+                "items": { "type": "string" }
+              },
+              "inboundTag": {
+                "type": "array",
+                "items": { "type": "string" }
+              },
+              "outboundTag": { "type": "string" },
+              "protocol": {
+                "type": "array",
+                "items": { "type": "string" }
+              }
+            }
+          }
+        },
+        "balancers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "tag": { "type": "string" },
+              "selector": { 
+                "type": "array",
+                "items": { "type": "string" }
+              },
+              "strategy": {
+                "type": "object",
+                "properties": {
+                  "type": { "type": "string" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "policy": {
+      "type": "object",
+      "properties": {
+        "levels": {
+          "type": "object",
+          "patternProperties": {
+            "^[0-9]+$": {
+              "type": "object",
+              "properties": {
+                "handshake": { "type": "integer" },
+                "connIdle": { "type": "integer" },
+                "uplinkOnly": { "type": "integer" },
+                "downlinkOnly": { "type": "integer" },
+                "statsUserUplink": { "type": "boolean" },
+                "statsUserDownlink": { "type": "boolean" },
+                "bufferSize": { "type": "integer" }
+              }
+            }
+          }
+        },
+        "system": {
+          "type": "object",
+          "properties": {
+            "statsInboundUplink": { "type": "boolean" },
+            "statsInboundDownlink": { "type": "boolean" },
+            "statsOutboundUplink": { "type": "boolean" },
+            "statsOutboundDownlink": { "type": "boolean" },
+            "bufferSize": { "type": "integer" }
+          }
+        }
+      }
+    },
+    "app": {
+      "type": "array",
+      "description": "App is for configurations of all features in Xray",
+      "items": {
+        "type": "object",
+        "description": "Feature configuration that must implement the Feature interface"
+      }
+    },
+    "transport": {
+      "type": "object",
+      "properties": {
+        "tcpSettings": {
+          "type": "object",
+          "properties": {
+            "acceptProxyProtocol": { "type": "boolean" },
+            "header": {
+              "type": "object",
+              "properties": {
+                "type": { "type": "string" },
+                "request": {
+                  "type": "object",
+                  "properties": {
+                    "version": { "type": "string" },
+                    "method": { "type": "string" },
+                    "path": { 
+                      "type": "array",
+                      "items": { "type": "string" }
+                    },
+                    "headers": {
+                      "type": "object",
+                      "patternProperties": {
+                        ".*": {
+                          "type": "array",
+                          "items": { "type": "string" }
+                        }
+                      }
+                    }
+                  }
+                },
+                "response": {
+                  "type": "object",
+                  "properties": {
+                    "version": { "type": "string" },
+                    "status": { "type": "string" },
+                    "reason": { "type": "string" },
+                    "headers": {
+                      "type": "object",
+                      "patternProperties": {
+                        ".*": {
+                          "type": "array",
+                          "items": { "type": "string" }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "kcpSettings": {
+          "type": "object",
+          "properties": {
+            "mtu": { "type": "integer" },
+            "tti": { "type": "integer" },
+            "uplinkCapacity": { "type": "integer" },
+            "downlinkCapacity": { "type": "integer" },
+            "congestion": { "type": "boolean" },
+            "writeBuffer": { "type": "integer" },
+            "readBuffer": { "type": "integer" },
+            "seed": { "type": "string" },
+            "header": {
+              "type": "object",
+              "properties": {
+                "type": { "type": "string" }
+              }
+            }
+          }
+        },
+        "wsSettings": {
+          "type": "object",
+          "properties": {
+            "acceptProxyProtocol": { "type": "boolean" },
+            "path": { "type": "string" },
+            "headers": {
+              "type": "object",
+              "patternProperties": {
+                ".*": { "type": "string" }
+              }
+            }
+          }
+        },
+        "quicSettings": {
+          "type": "object",
+          "properties": {
+            "security": { "type": "string" },
+            "key": { "type": "string" },
+            "header": {
+              "type": "object",
+              "properties": {
+                "type": { "type": "string" }
+              }
+            }
+          }
+        },
+        "grpcSettings": {
+          "type": "object",
+          "properties": {
+            "serviceName": { "type": "string" },
+            "multiMode": { "type": "boolean" }
+          }
+        }
+      }
+    },
+    "extension": {
+      "type": "array",
+      "description": "Configuration for extensions. The config may not work if corresponding extension is not loaded into Xray",
+      "items": {
+        "type": "object",
+        "description": "Extension configuration"
+      }
+    },
+    "stats": {
+      "type": "object"
+    },
+    "reverse": {
+      "type": "object",
+      "properties": {
+        "bridges": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "tag": { "type": "string" },
+              "domain": { "type": "string" }
+            }
+          }
+        },
+        "portals": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "tag": { "type": "string" },
+              "domain": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "dns": {
+      "type": "object",
+      "properties": {
+        "hosts": {
+          "type": "object",
+          "patternProperties": {
+            "^.+$": {
+              "oneOf": [
+                { "type": "string" },
+                { "type": "array", "items": { "type": "string" } }
+              ]
+            }
+          }
+        },
+        "servers": {
+          "type": "array",
+          "items": {
+            "oneOf": [
+              { "type": "string" },
+              {
+                "type": "object",
+                "properties": {
+                  "address": { "type": "string" },
+                  "port": { "$ref": "#/definitions/port" },
+                  "domains": { "type": "array", "items": { "type": "string" } }
+                }
+              }
+            ]
+          }
+        },
+        "clientIp": { "type": "string" },
+        "tag": { "type": "string" },
+        "queryStrategy": {
+          "type": "string",
+          "enum": ["UseIP", "UseIPv4", "UseIPv6"]
+        },
+        "disableCache": { "type": "boolean" },
+        "disableFallback": { "type": "boolean" },
+        "disableFallbackIfMatch": { "type": "boolean" }
+      }
+    },
+    "log": {
+      "type": "object",
+      "properties": {
+        "access": { "type": "string" },
+        "error": { "type": "string" },
+        "loglevel": {
+          "type": "string",
+          "enum": ["debug", "info", "warning", "error", "none"]
+        }
+      }
+    },
+    "api": {
+      "type": "object",
+      "properties": {
+        "tag": { "type": "string" },
+        "services": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "observatory": {
+      "type": "object",
+      "properties": {
+        "subjectSelector": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "probeInterval": { "type": "string" },
+        "probeUrl": { "type": "string" }
+      }
+    }
+  }
+}
