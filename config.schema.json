@@ -334,6 +334,24 @@
           "items": { "type": "string" }
         }
       }
+    },
+    "freedomSettings": {
+      "type": "object",
+      "properties": {
+        "domainStrategy": {
+          "type": "string",
+          "enum": ["AsIs", "UseIP", "UseIPv4", "UseIPv6"]
+        },
+        "redirect": { "type": "string" },
+        "userLevel": { "type": "integer" }
+      }
+    },
+    "loopbackSettings": {
+      "type": "object",
+      "properties": {
+        "address": { "$ref": "#/definitions/address" },
+        "port": { "$ref": "#/definitions/port" }
+      }
     }
   },
   "properties": {
@@ -425,7 +443,9 @@
                   "redirect": { "type": "string" },
                   "userLevel": { "type": "integer" }
                 }
-              }
+              },
+              { "$ref": "#/definitions/freedomSettings" },
+              { "$ref": "#/definitions/loopbackSettings" }
             ]
           },
           "stream_settings": { "$ref": "#/definitions/streamSettings" },
