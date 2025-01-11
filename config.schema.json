@@ -232,6 +232,108 @@
           }
         }
       }
+    },
+    "fakednsSettings": {
+      "type": "object",
+      "properties": {
+        "ipPool": { "type": "string" },
+        "poolSize": { "type": "integer" }
+      }
+    },
+    "streamSettings": {
+      "type": "object",
+      "properties": {
+        "network": {
+          "$ref": "#/definitions/transportProtocol"
+        },
+        "security": {
+          "type": "string",
+          "enum": ["none", "tls"]
+        },
+        "tlsSettings": {
+          "type": "object",
+          "properties": {
+            "serverName": { "type": "string" },
+            "certificates": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "certificateFile": { "type": "string" },
+                  "keyFile": { "type": "string" },
+                  "certificate": { "type": "array", "items": { "type": "string" } },
+                  "key": { "type": "array", "items": { "type": "string" } }
+                }
+              }
+            }
+          }
+        },
+        "wsSettings": {
+          "type": "object",
+          "properties": {
+            "path": { "type": "string" },
+            "headers": { "type": "object" }
+          }
+        },
+        "realitySettings": {
+          "type": "object",
+          "properties": {
+            "show": { "type": "boolean" },
+            "dest": { "type": "string" },
+            "xver": { "type": "integer" },
+            "serverNames": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "privateKey": { "type": "string" },
+            "minClientVer": { "type": "string" },
+            "maxClientVer": { "type": "string" },
+            "maxTimeDiff": { "type": "integer" },
+            "shortIds": {
+              "type": "array",
+              "items": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "dnsServerSettings": {
+      "type": "object",
+      "properties": {
+        "prioritizedDomain": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "type": { 
+                "type": "string",
+                "enum": ["Full", "Subdomain"]
+              },
+              "domain": { "type": "string" }
+            }
+          }
+        },
+        "geoip": {
+          "type": "object",
+          "properties": {
+            "cidr": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "ip": { "type": "string" },
+                  "prefix": { "type": "integer" }
+                }
+              }
+            },
+            "inverseMatch": { "type": "boolean" }
+          }
+        },
+        "expectedIPs": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
     }
   },
   "properties": {
@@ -270,43 +372,7 @@
               { "$ref": "#/definitions/socksSettings" }
             ]
           },
-          "stream_settings": {
-            "type": "object",
-            "properties": {
-              "network": {
-                "$ref": "#/definitions/transportProtocol"
-              },
-              "security": {
-                "type": "string",
-                "enum": ["none", "tls"]
-              },
-              "tlsSettings": {
-                "type": "object",
-                "properties": {
-                  "serverName": { "type": "string" },
-                  "certificates": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "properties": {
-                        "certificateFile": { "type": "string" },
-                        "keyFile": { "type": "string" },
-                        "certificate": { "type": "array", "items": { "type": "string" } },
-                        "key": { "type": "array", "items": { "type": "string" } }
-                      }
-                    }
-                  }
-                }
-              },
-              "wsSettings": {
-                "type": "object",
-                "properties": {
-                  "path": { "type": "string" },
-                  "headers": { "type": "object" }
-                }
-              }
-            }
-          },
+          "stream_settings": { "$ref": "#/definitions/streamSettings" },
           "sniffing": {
             "type": "object",
             "properties": {
@@ -362,25 +428,7 @@
               }
             ]
           },
-          "stream_settings": {
-            "type": "object",
-            "properties": {
-              "network": {
-                "$ref": "#/definitions/transportProtocol"
-              },
-              "security": {
-                "type": "string",
-                "enum": ["none", "tls"]
-              },
-              "tlsSettings": {
-                "type": "object",
-                "properties": {
-                  "serverName": { "type": "string" },
-                  "allowInsecure": { "type": "boolean" }
-                }
-              }
-            }
-          },
+          "stream_settings": { "$ref": "#/definitions/streamSettings" },
           "expire": {
             "type": "integer",
             "description": "If not zero, this outbound will be expired in seconds",
@@ -705,7 +753,11 @@
                 "properties": {
                   "address": { "type": "string" },
                   "port": { "$ref": "#/definitions/port" },
-                  "domains": { "type": "array", "items": { "type": "string" } }
+                  "domains": { "type": "array", "items": { "type": "string" } },
+                  "skipFallback": { "type": "boolean" },
+                  "prioritizedDomain": { "$ref": "#/definitions/dnsServerSettings/properties/prioritizedDomain" },
+                  "geoip": { "$ref": "#/definitions/dnsServerSettings/properties/geoip" },
+                  "expectedIPs": { "$ref": "#/definitions/dnsServerSettings/properties/expectedIPs" }
                 }
               }
             ]
@@ -715,11 +767,19 @@
         "tag": { "type": "string" },
         "queryStrategy": {
           "type": "string",
-          "enum": ["UseIP", "UseIPv4", "UseIPv6"]
+          "enum": ["UseIP", "UseIPv4", "UseIPv6", "UseIPv4v6"]
         },
         "disableCache": { "type": "boolean" },
         "disableFallback": { "type": "boolean" },
-        "disableFallbackIfMatch": { "type": "boolean" }
+        "disableFallbackIfMatch": { "type": "boolean" },
+        "fakedns": {
+          "type": "object",
+          "properties": {
+            "ipPool": { "type": "string" },
+            "poolSize": { "type": "integer" },
+            "poolTimeout": { "type": "integer" }
+          }
+        }
       }
     },
     "log": {
