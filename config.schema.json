@@ -154,6 +154,84 @@
         "level": { "type": "integer" },
         "network": { "type": "string" }
       }
+    },
+    "sockoptSettings": {
+      "type": "object",
+      "properties": {
+        "mark": { "type": "integer" },
+        "tcpFastOpen": { "type": "boolean" },
+        "tproxy": { 
+          "type": "string",
+          "enum": ["off", "redirect", "tproxy"]
+        },
+        "tcpKeepAliveInterval": { "type": "integer" }
+      }
+    },
+    "dokodemodoorSettings": {
+      "type": "object",
+      "properties": {
+        "address": { "$ref": "#/definitions/address" },
+        "port": { "$ref": "#/definitions/port" },
+        "network": { 
+          "type": "string",
+          "enum": ["tcp", "udp", "tcp,udp"]
+        },
+        "timeout": { "type": "integer" },
+        "followRedirect": { "type": "boolean" },
+        "userLevel": { "type": "integer" }
+      }
+    },
+    "socksSettings": {
+      "type": "object",
+      "properties": {
+        "auth": { 
+          "type": "string",
+          "enum": ["noauth", "password"]
+        },
+        "accounts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "user": { "type": "string" },
+              "pass": { "type": "string" },
+              "level": { "type": "integer" }
+            }
+          }
+        },
+        "udp": { "type": "boolean" },
+        "ip": { "$ref": "#/definitions/address" },
+        "userLevel": { "type": "integer" }
+      }
+    },
+    "httpSettings": {
+      "type": "object",
+      "properties": {
+        "timeout": { "type": "integer" },
+        "accounts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "user": { "type": "string" },
+              "pass": { "type": "string" }
+            }
+          }
+        },
+        "allowTransparent": { "type": "boolean" },
+        "userLevel": { "type": "integer" }
+      }
+    },
+    "blackholeSettings": {
+      "type": "object",
+      "properties": {
+        "response": {
+          "type": "object",
+          "properties": {
+            "type": { "type": "string" }
+          }
+        }
+      }
     }
   },
   "properties": {
@@ -186,7 +264,10 @@
               { "$ref": "#/definitions/vmessSettings" },
               { "$ref": "#/definitions/vlessSettings" },
               { "$ref": "#/definitions/trojanSettings" },
-              { "$ref": "#/definitions/shadowsocksSettings" }
+              { "$ref": "#/definitions/shadowsocksSettings" },
+              { "$ref": "#/definitions/dokodemodoorSettings" },
+              { "$ref": "#/definitions/httpSettings" },
+              { "$ref": "#/definitions/socksSettings" }
             ]
           },
           "stream_settings": {
@@ -238,7 +319,8 @@
                 }
               }
             }
-          }
+          },
+          "sockopt": { "$ref": "#/definitions/sockoptSettings" }
         }
       }
     },
@@ -264,6 +346,9 @@
               { "$ref": "#/definitions/vlessSettings" },
               { "$ref": "#/definitions/trojanSettings" },
               { "$ref": "#/definitions/shadowsocksSettings" },
+              { "$ref": "#/definitions/httpSettings" },
+              { "$ref": "#/definitions/socksSettings" },
+              { "$ref": "#/definitions/blackholeSettings" },
               {
                 "type": "object",
                 "properties": {
@@ -304,7 +389,8 @@
           "comment": {
             "type": "string",
             "description": "Comment of this outbound handler"
-          }
+          },
+          "sockopt": { "$ref": "#/definitions/sockoptSettings" }
         }
       }
     },
