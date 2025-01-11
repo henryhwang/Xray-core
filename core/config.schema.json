@@ -22,9 +22,138 @@
       "type": "string",
       "enum": ["tcp", "udp", "mkcp", "websocket", "http", "domainsocket", "quic"]
     },
-    "protocol": {
+    "inboundProtocol": {
       "type": "string",
-      "enum": ["vmess", "vless", "trojan", "shadowsocks", "dokodemo-door", "socks", "http", "freedom", "blackhole", "dns"]
+      "enum": [
+        "dokodemo-door",
+        "http",
+        "socks",
+        "vmess",
+        "vless",
+        "trojan",
+        "shadowsocks",
+        "dns"
+      ]
+    },
+    "outboundProtocol": {
+      "type": "string",
+      "enum": [
+        "blackhole",
+        "dns",
+        "freedom",
+        "http",
+        "socks",
+        "vmess",
+        "vless",
+        "trojan",
+        "shadowsocks",
+        "loopback"
+      ]
+    },
+    "vmessSettings": {
+      "type": "object",
+      "properties": {
+        "clients": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "alterId": { "type": "integer" },
+              "security": { 
+                "type": "string",
+                "enum": ["auto", "none", "aes-128-gcm", "chacha20-poly1305"]
+              },
+              "level": { "type": "integer" }
+            }
+          }
+        },
+        "default": {
+          "type": "object",
+          "properties": {
+            "level": { "type": "integer" },
+            "alterId": { "type": "integer" }
+          }
+        },
+        "detour": {
+          "type": "object",
+          "properties": {
+            "to": { "type": "string" }
+          }
+        }
+      }
+    },
+    "vlessSettings": {
+      "type": "object",
+      "properties": {
+        "clients": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "level": { "type": "integer" },
+              "flow": { 
+                "type": "string",
+                "enum": ["xtls-rprx-direct", "xtls-rprx-origin"]
+              }
+            }
+          }
+        },
+        "decryption": { "type": "string" },
+        "fallbacks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "alpn": { "type": "string" },
+              "path": { "type": "string" },
+              "dest": { "type": "string" },
+              "xver": { "type": "integer" }
+            }
+          }
+        }
+      }
+    },
+    "trojanSettings": {
+      "type": "object",
+      "properties": {
+        "clients": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "password": { "type": "string" },
+              "email": { "type": "string" },
+              "level": { "type": "integer" }
+            }
+          }
+        },
+        "fallbacks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "alpn": { "type": "string" },
+              "path": { "type": "string" },
+              "dest": { "type": "string" },
+              "xver": { "type": "integer" }
+            }
+          }
+        }
+      }
+    },
+    "shadowsocksSettings": {
+      "type": "object",
+      "properties": {
+        "method": { 
+          "type": "string",
+          "enum": ["aes-256-gcm", "aes-128-gcm", "chacha20-poly1305", "none"]
+        },
+        "password": { "type": "string" },
+        "level": { "type": "integer" },
+        "network": { "type": "string" }
+      }
     }
   },
   "properties": {
@@ -49,12 +178,16 @@
             "description": "Port to listen on"
           },
           "protocol": {
-            "type": "string",
+            "$ref": "#/definitions/inboundProtocol",
             "description": "Protocol name of inbound proxy"
           },
           "settings": {
-            "type": "object",
-            "description": "Protocol-specific settings"
+            "oneOf": [
+              { "$ref": "#/definitions/vmessSettings" },
+              { "$ref": "#/definitions/vlessSettings" },
+              { "$ref": "#/definitions/trojanSettings" },
+              { "$ref": "#/definitions/shadowsocksSettings" }
+            ]
           },
           "stream_settings": {
             "type": "object",
@@ -122,12 +255,27 @@
             "description": "Tag of this outbound handler"
           },
           "protocol": {
-            "type": "string",
+            "$ref": "#/definitions/outboundProtocol",
             "description": "Protocol name of outbound proxy"
           },
           "settings": {
-            "type": "object",
-            "description": "Protocol-specific settings"
+            "oneOf": [
+              { "$ref": "#/definitions/vmessSettings" },
+              { "$ref": "#/definitions/vlessSettings" },
+              { "$ref": "#/definitions/trojanSettings" },
+              { "$ref": "#/definitions/shadowsocksSettings" },
+              {
+                "type": "object",
+                "properties": {
+                  "domainStrategy": {
+                    "type": "string",
+                    "enum": ["AsIs", "UseIP", "UseIPv4", "UseIPv6"]
+                  },
+                  "redirect": { "type": "string" },
+                  "userLevel": { "type": "integer" }
+                }
+              }
+            ]
           },
           "stream_settings": {
             "type": "object",
@@ -261,7 +409,34 @@
       "description": "App is for configurations of all features in Xray",
       "items": {
         "type": "object",
-        "description": "Feature configuration that must implement the Feature interface"
+        "oneOf": [
+          { "$ref": "#/properties/routing" },
+          { "$ref": "#/properties/dns" },
+          { "$ref": "#/properties/stats" },
+          { "$ref": "#/properties/policy" },
+          { "$ref": "#/properties/reverse" },
+          { "$ref": "#/properties/observatory" },
+          {
+            "type": "object",
+            "properties": {
+              "type": { 
+                "type": "string",
+                "enum": [
+                  "dispatcher", 
+                  "router",
+                  "dns",
+                  "policy",
+                  "inbound",
+                  "outbound",
+                  "stats",
+                  "reverse"
+                ]
+              },
+              "settings": { "type": "object" }
+            },
+            "required": ["type"]
+          }
+        ]
       }
     },
     "transport": {
@@ -379,7 +554,21 @@
       }
     },
     "stats": {
-      "type": "object"
+      "type": "object",
+      "properties": {
+        "channel": {
+          "type": "object",
+          "patternProperties": {
+            "^.*$": {
+              "type": "object",
+              "properties": {
+                "value": { "type": "integer" },
+                "timestamp": { "type": "integer" }
+              }
+            }
+          }
+        }
+      }
     },
     "reverse": {
       "type": "object",
