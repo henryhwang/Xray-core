@@ -20,7 +20,7 @@
     },
     "transportProtocol": {
       "type": "string",
-      "enum": ["tcp", "udp", "mkcp", "websocket", "http", "domainsocket", "quic"]
+      "enum": ["tcp", "udp", "mkcp", "websocket", "http", "domainsocket", "quic", "grpc"]
     },
     "inboundProtocol": {
       "type": "string",
@@ -293,6 +293,13 @@
               "type": "array",
               "items": { "type": "string" }
             }
+          }
+        },
+        "grpcSettings": {
+          "type": "object",
+          "properties": {
+            "serviceName": { "type": "string" },
+            "multiMode": { "type": "boolean" }
           }
         }
       }
